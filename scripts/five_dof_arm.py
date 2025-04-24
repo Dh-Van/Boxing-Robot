@@ -2,7 +2,8 @@ from math import sqrt, sin, cos, atan, atan2, degrees, pi
 import numpy as np
 from matplotlib.figure import Figure
 from simutils import EndEffector, rotm_to_euler, euler_to_rotm, check_joint_limits, dh_to_matrix, near_zero, wraptopi
-
+from trajectory_generator import *
+import hiwonder
 PI = 3.1415926535897932384
 # np.set_printoptions(precision=3)
 
@@ -509,3 +510,25 @@ class FiveDOFRobot:
         # print(f'calc {ee_position_calc} | act {ee_position_actual}\n')
         return True if np.linalg.norm(e) < tol else False
 
+
+    # def moveToPos(self, cur_xyz, goal_xyz):
+    #     end_pos = self.solve_inverse_kinematics(goal_xyz)
+    #     steps = self.generateTrajectory(cur_xyz, end_pos)
+    #     for i in range(len(steps[0])):
+    #         joint_angles = [steps[j][i] for j in range(len(steps))]  # Extract joint angles for time step `i`
+    #         hiwonder.set_joint_values(joint_angles)  # Pass joint angles for this time step
+        
+
+    def generateTrajectory(self, cur_pos, end_pos):
+        """Generates a list of trajectories for the arm to follow"""
+        traj = MultiAxisTrajectoryGenerator(method="quintic",
+                                        interval=[0,5],
+                                        ndof=5,
+                                        start_pos=cur_pos,
+                                        final_pos=end_pos)
+        return(traj.generatePositions(nsteps=20))
+        # t = traj.generatePositions(nsteps=20)
+        # print(t[0])
+        # t[0] is the 1st joint of the arm
+# five_dof = FiveDOFRobot()
+# five_dof.generateTrajectory([0,0,0,0,0], [10,10,10,10,10])
