@@ -10,6 +10,7 @@ import numpy as np
 from board_controller import BoardController
 from servo_bus_controller import ServoBusController
 import utils as ut
+from five_dof_arm import FiveDOFRobot
 
 # Robot base constants
 WHEEL_RADIUS = 0.047  # meters
@@ -30,6 +31,8 @@ class HiwonderRobot:
         ]
         self.joint_control_delay = 0.2 # secs
         self.speed_control_delay = 0.2
+
+        self.sim = FiveDOFRobot()
 
         self.move_to_home_position()
 
@@ -92,20 +95,14 @@ class HiwonderRobot:
         """
         vel = [cmd.arm_vx, cmd.arm_vy, cmd.arm_vz]
 
-        ######################################################################
-        # insert your code for finding "thetalist_dot"
-
-        thetalist_dot = [0]*5
-
-        ######################################################################
-
+        thetalist_dot = self.sim.calc_velocity_kinematics(vel)
 
         print(f'[DEBUG] Current thetalist (deg) = {self.joint_values}') 
         print(f'[DEBUG] linear vel: {[round(vel[0], 3), round(vel[1], 3), round(vel[2], 3)]}')
         print(f'[DEBUG] thetadot (deg/s) = {[round(td,2) for td in thetalist_dot]}')
 
         # Update joint angles
-        dt = 0.5 # Fixed time step
+        dt = 100 # Fixed time step
         K = 1600 # mapping gain for individual joint control
         new_thetalist = [0.0]*6
 
