@@ -81,12 +81,20 @@ class FiveDOFRobot:
         self.theta = [np.clip(th, self.theta_limits[i][0], self.theta_limits[i][1]) 
                       for i, th in enumerate(self.theta)]
 
-        # Set the Denavit-Hartenberg parameters for each joint
-        self.DH[0] = [self.theta[0], self.l1, 0, np.pi/2]
-        self.DH[1] = [self.theta[1] + np.pi/2, 0, self.l2, np.pi]
-        self.DH[2] = [self.theta[2], 0, self.l3, np.pi]
-        self.DH[3] = [self.theta[3] - np.pi/2, 0, 0, -np.pi/2]
-        self.DH[4] = [self.theta[4], self.l4 + self.l5, 0, 0]
+        # # Set the Denavit-Hartenberg parameters for each joint
+        # self.DH[0] = [self.theta[0], self.l1, 0, np.pi/2]
+        # self.DH[1] = [self.theta[1] + np.pi/2, 0, self.l2, np.pi]
+        # self.DH[2] = [self.theta[2], 0, self.l3, np.pi]
+        # self.DH[3] = [self.theta[3] - np.pi/2, 0, 0, -np.pi/2]
+        # self.DH[4] = [self.theta[4], self.l4 + self.l5, 0, 0]
+
+        self.DH = [
+            [self.theta[0], self.l1, 0, -np.pi/2],
+            [self.theta[1] - np.pi/2, 0, self.l2, np.pi],
+            [self.theta[2], 0, self.l3, np.pi],
+            [self.theta[3] + np.pi/2, 0, 0, np.pi/2],
+            [self.theta[4], self.l4 + self.l5, 0, 0],
+        ]
 
         # Compute the transformation matrices
         for i in range(self.num_dof):
@@ -486,6 +494,8 @@ class FiveDOFRobot:
         # Extract and assign the RPY (roll, pitch, yaw) from the rotation matrix
         rpy = rotm_to_euler(self.T_ee[:3, :3])
         self.ee.rotx, self.ee.roty, self.ee.rotz = rpy[0], rpy[1], rpy[2]
+
+        print(f'[{self.ee.x}, {self.ee.y}, {self.ee.z}, {self.ee.rotx}, {self.ee.roty}, {self.ee.rotz}]')
 
         # Calculate the EE axes in space (in the base frame)
         self.EE = [self.ee.x, self.ee.y, self.ee.z]
