@@ -24,14 +24,14 @@ class GamepadControl:
         # Control flags
         self.MOBILE_BASE_FLAG = False
         self.ARM_FLAG = False
-        self.ARM_J1_FLAG = False
-        self.ARM_J2_FLAG = False
-        self.ARM_J3_FLAG = False
-        self.ARM_J4_FLAG = False
-        self.ARM_J5_FLAG = False
-        self.ARM_EE_FLAG = False
         self.ARM_HOME = False
         self.UTILITY_BTN = False
+        self.X = False
+        self.Y = False
+        self.B = False
+        self.A = False
+        self.RT = False
+        self.LT = False
 
     
     def initialize_gamepad(self):
@@ -76,14 +76,16 @@ class GamepadControl:
             gamepad_cmds.arm_vy = self.map_value(self.abs_y, [32767, -32767], [-0.1, 0.1])
             gamepad_cmds.arm_vz = self.map_value(self.abs_z, [32767, -32767], [-0.1, 0.1])
 
-        gamepad_cmds.arm_j1 = self.map_value(self.abs_x, [-32767, 32767], [-0.1, 0.1]) if self.ARM_J1_FLAG else 0.0
-        gamepad_cmds.arm_j2 = self.map_value(self.abs_x, [-32767, 32767], [-0.1, 0.1]) if self.ARM_J2_FLAG else 0.0
-        gamepad_cmds.arm_j3 = self.map_value(self.abs_x, [-32767, 32767], [-0.1, 0.1]) if self.ARM_J3_FLAG else 0.0
-        gamepad_cmds.arm_j4 = self.map_value(self.abs_x, [-32767, 32767], [-0.1, 0.1]) if self.ARM_J4_FLAG else 0.0
-        gamepad_cmds.arm_j5 = self.map_value(self.abs_x, [-32767, 32767], [-0.1, 0.1]) if self.ARM_J5_FLAG else 0.0
-        gamepad_cmds.arm_ee = self.map_value(self.abs_x, [-32767, 32767], [-0.1, 0.1]) if self.ARM_EE_FLAG else 0.0
+        gamepad_cmds.arm_lb = int(self.ARM_FLAG)
+
+        gamepad_cmds.btn_x = int(self.X)
+        gamepad_cmds.btn_y = int(self.Y)
+        gamepad_cmds.btn_b = int(self.B)
+        gamepad_cmds.btn_a = int(self.A)
+        gamepad_cmds.btn_rt = int(self.RT)
+        gamepad_cmds.btn_lt = int(self.LT)
+
         gamepad_cmds.arm_home = int(self.ARM_HOME)
-        gamepad_cmds.utility_btn = int(self.UTILITY_BTN)
 
         self.gamepad_cmds_prev = gamepad_cmds
         return gamepad_cmds
@@ -94,15 +96,14 @@ class GamepadControl:
             'ABS_X': ('abs_x', event.state),
             'ABS_Y': ('abs_y', event.state),
             'ABS_RY': ('abs_z', event.state),
-            # 'BTN_TL': ('MOBILE_BASE_FLAG', bool(event.state)),
-            'BTN_TL': ('UTILITY_BTN', bool(event.state)),
+            'BTN_TL': ('MOBILE_BASE_FLAG', bool(event.state)),
             'BTN_TR': ('ARM_FLAG', bool(event.state)),
-            'BTN_WEST': ('ARM_J1_FLAG', bool(event.state)),
-            'BTN_EAST': ('ARM_J2_FLAG', bool(event.state)),
-            'BTN_SOUTH': ('ARM_J3_FLAG', bool(event.state)),
-            'BTN_NORTH': ('ARM_J4_FLAG', bool(event.state)),
-            'ABS_RZ': ('ARM_J5_FLAG', bool(event.state)),
-            'ABS_Z': ('ARM_EE_FLAG', bool(event.state)),
+            'BTN_WEST': ('Y', bool(event.state)),
+            'BTN_EAST': ('B', bool(event.state)),
+            'BTN_SOUTH': ('A', bool(event.state)),
+            'BTN_NORTH': ('X', bool(event.state)),
+            'ABS_RZ': ('RT', bool(event.state)),
+            'ABS_Z': ('LT', bool(event.state)),
             'BTN_SELECT': ('ARM_HOME', bool(event.state))
         }
 

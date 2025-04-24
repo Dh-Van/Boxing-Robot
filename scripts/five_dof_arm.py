@@ -30,9 +30,9 @@ class FiveDOFRobot:
         self.l1, self.l2, self.l3, self.l4, self.l5 = 0.155, 0.099, 0.095, 0.055, 0.105 # from hardware measurements
         
         # Joint angles (initialized to zero)
-        theta = [0, 0, 90, -30, 0, 0]
-        self.theta = [np.radians(t) for t in theta]
-        
+        theta = [0, 0, 90, -30, 0]
+        # self.theta = [np.radians(t) for t in theta]
+        self.theta = [0, 0, np.pi / 2, -np.pi / 6, 0]
 
         joint_limits = [
             [-120, 120], [-90, 90], [-120, 120],
@@ -172,7 +172,7 @@ class FiveDOFRobot:
                 # Calculate forward kinematics with the new joint angles
                 self.calc_forward_kinematics(self.theta, radians=True)
 
-                return True
+                return self.theta
             
             else:
                 print(f"\n[Analytical IK solver] ERROR: No valid solution found! Joint limits may be exceeded or position may be unreachable.")
@@ -181,6 +181,7 @@ class FiveDOFRobot:
         
         except RuntimeWarning:
             print("\n [ERROR] (Runtime) Joint limits exceeded! \n")
+
         
    
     def calc_numerical_ik(self, EE: EndEffector, tol=1e-3, ilimit=500):
@@ -238,7 +239,7 @@ class FiveDOFRobot:
         # update forward kinematics
         self.calc_forward_kinematics(self.theta, radians=True)
 
-        return True
+        return q
 
         
 
@@ -277,8 +278,7 @@ class FiveDOFRobot:
 
         # Recompute robot points based on updated joint angles
         self.calc_forward_kinematics(self.theta, radians=True)
-
-        return thetadot
+        return np.degrees(thetadot)
 
 
     def jacobian(self, theta: list = None):
@@ -403,6 +403,8 @@ class FiveDOFRobot:
         T = np.zeros((self.num_dof,4,4))
         for i in range(self.num_dof):
             T[i] = dh_to_matrix(DH[i])
+
+        self.calc_robot_points()
 
         return T[0] @ T[1] @ T[2] @ T[3] @ T[4] @ np.array([0, 0, 0, 1])
 

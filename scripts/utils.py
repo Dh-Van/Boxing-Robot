@@ -32,15 +32,16 @@ class GamepadCmds:
     base_vx: int = 0
     base_vy: int = 0
     base_w: int = 0
+    arm_lb: int = 0
     arm_vx: int = 0
     arm_vy: int = 0
     arm_vz: int = 0
-    arm_j1: int = 0
-    arm_j2: int = 0
-    arm_j3: int = 0
-    arm_j4: int = 0
-    arm_j5: int = 0
-    arm_ee: int = 0
+    btn_x: int = 0
+    btn_y: int = 0
+    btn_b: int = 0
+    btn_a: int = 0
+    btn_lt: int = 0
+    btn_rt: int = 0
     arm_home: int = 0
     utility_btn: int = 0
 

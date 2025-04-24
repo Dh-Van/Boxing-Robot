@@ -10,6 +10,7 @@ import numpy as np
 from board_controller import BoardController
 from servo_bus_controller import ServoBusController
 import utils as ut
+import simutils as s_ut
 from five_dof_arm import FiveDOFRobot
 
 # Robot base constants
@@ -53,7 +54,18 @@ class HiwonderRobot:
         print(f'---------------------------------------------------------------------')
         
         # self.set_base_velocity(cmd)
-        self.set_arm_velocity(cmd)
+
+        if cmd.arm_lb:
+            self.set_arm_velocity(cmd)
+
+        if cmd.btn_x:
+            pos = [0.23376863005385828, 0.008227954229936628, 0.17673272810981122, 3.141592653589793, 1.0596323536177026, -3.1064101781827542]
+            self.go_to_position(pos)
+
+        if cmd.btn_y:
+            # pos = [0.08203527,  0.06826877,  1.58996693, -0.50472789,  0.00461826,  0]
+            # self.set_joint_values(pos, radians=True)
+            self.set_joint_values([90, 0, 0, 0, 90, 0])
 
         ######################################################################
 
@@ -61,7 +73,7 @@ class HiwonderRobot:
         
         ######################################################################
 
-        print(f'[DEBUG] XYZ position: X: {round(position[0], 3)}, Y: {round(position[1], 3)}, Z: {round(position[2], 3)} \n')
+        # print(f'[DEBUG] XYZ position: X: {round(position[0], 3)}, Y: {round(position[1], 3)}, Z: {round(position[2], 3)} \n')
 
 
     def set_base_velocity(self, cmd: ut.GamepadCmds):
@@ -97,31 +109,30 @@ class HiwonderRobot:
 
         thetalist_dot = self.sim.calc_velocity_kinematics(vel)
 
-        print(f'[DEBUG] Current thetalist (deg) = {self.joint_values}') 
-        print(f'[DEBUG] linear vel: {[round(vel[0], 3), round(vel[1], 3), round(vel[2], 3)]}')
-        print(f'[DEBUG] thetadot (deg/s) = {[round(td,2) for td in thetalist_dot]}')
+        # print(f'[DEBUG] Current thetalist (deg) = {self.joint_values}') 
+        # print(f'[DEBUG] linear vel: {[round(vel[0], 3), round(vel[1], 3), round(vel[2], 3)]}')
+        # print(f'[DEBUG] thetadot (deg/s) = {[round(td,2) for td in thetalist_dot]}')
 
         # Update joint angles
-        dt = 100 # Fixed time step
+        dt = 1 # Fixed time step
         K = 1600 # mapping gain for individual joint control
         new_thetalist = [0.0]*6
 
         # linear velocity control
         for i in range(5):
             new_thetalist[i] = self.joint_values[i] + dt * thetalist_dot[i]
-        # individual joint control
-        new_thetalist[0] += dt * K * cmd.arm_j1
-        new_thetalist[1] += dt * K * cmd.arm_j2
-        new_thetalist[2] += dt * K * cmd.arm_j3
-        new_thetalist[3] += dt * K * cmd.arm_j4
-        new_thetalist[4] += dt * K * cmd.arm_j5
-        new_thetalist[5] = self.joint_values[5] + dt * K * cmd.arm_ee
 
-        new_thetalist = [round(theta,2) for theta in new_thetalist]
         print(f'[DEBUG] Commanded thetalist (deg) = {new_thetalist}')       
         
         # set new joint angles
         self.set_joint_values(new_thetalist, radians=False)
+
+    def go_to_position(self, pos):
+        EE = s_ut.EndEffector(pos[0], pos[1], pos[2], pos[3], pos[4], pos[5])
+        theta = self.sim.calc_numerical_ik(EE)
+        theta = np.append(theta, 0.0)
+        print(theta)
+        self.set_joint_values(theta, radians = True)
 
 
     def set_joint_value(self, joint_id: int, theta: float, duration=250, radians=False):
@@ -155,9 +166,12 @@ class HiwonderRobot:
         if radians:
             thetalist = [np.rad2deg(theta) for theta in thetalist]
 
+
         thetalist = self.enforce_joint_limits(thetalist)
         self.joint_values = thetalist # updates joint_values with commanded thetalist
+        print(f"thetalist={thetalist}")
         thetalist = self.remap_joints(thetalist) # remap the joint values from software to hardware
+
 
         for joint_id, theta in enumerate(thetalist, start=1):
             pulse = self.angle_to_pulse(theta)
