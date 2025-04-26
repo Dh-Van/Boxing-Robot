@@ -76,7 +76,8 @@ class GamepadControl:
             gamepad_cmds.arm_vy = self.map_value(self.abs_y, [32767, -32767], [-0.1, 0.1])
             gamepad_cmds.arm_vz = self.map_value(self.abs_z, [32767, -32767], [-0.1, 0.1])
 
-        gamepad_cmds.arm_lb = int(self.ARM_FLAG)
+        gamepad_cmds.base_lb = int(self.MOBILE_BASE_FLAG)
+        gamepad_cmds.arm_rb = int(self.ARM_FLAG)
 
         gamepad_cmds.btn_x = int(self.X)
         gamepad_cmds.btn_y = int(self.Y)

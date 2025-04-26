@@ -32,7 +32,8 @@ class GamepadCmds:
     base_vx: int = 0
     base_vy: int = 0
     base_w: int = 0
-    arm_lb: int = 0
+    base_lb: int = 0
+    arm_rb: int = 0
     arm_vx: int = 0
     arm_vy: int = 0
     arm_vz: int = 0

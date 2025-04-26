@@ -57,8 +57,11 @@ class HiwonderRobot:
 
         home_pos = [0.234, 0, 0.174, 0, 0, 0]
 
-        if cmd.arm_lb:
+        if cmd.arm_rb:
             self.set_arm_velocity(cmd)
+
+        if cmd.base_lb:
+            self.set_base_velocity(cmd)
 
         if cmd.btn_x:
             self.go_to_position(home_pos)
@@ -69,7 +72,6 @@ class HiwonderRobot:
             pos[1] += 0
             pos[2] += 0.1
             self.go_to_position(pos)
-            # self.set_joint_values([90, 0, 0, 0, 90, 0])
 
         ######################################################################
 
@@ -88,12 +90,19 @@ class HiwonderRobot:
         motor4 w2|     |w3 motor2
         
         """
-        ######################################################################
-        # insert your code for finding "speed"
+        x = -1 * cmd.base_vy
+        y = -1 * cmd.base_vx
+        spin = cmd.base_w
 
-        speed = [0]*4
-        
-        ######################################################################
+        norm_factor = max(abs(x) + abs(y) + abs(spin), 1)
+        gain = 100
+
+        fl = ((y + x + spin) / norm_factor) * gain
+        bl = ((y - x - spin) / norm_factor) * gain
+        fr = ((y - x + spin) / norm_factor) * gain
+        br = ((y + x - spin) / norm_factor) * gain
+
+        speed = [fr, br, fl, bl]
 
         # Send speeds to motors
         self.board.set_motor_speed(speed)
