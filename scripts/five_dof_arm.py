@@ -82,19 +82,11 @@ class FiveDOFRobot:
                       for i, th in enumerate(self.theta)]
 
         # # Set the Denavit-Hartenberg parameters for each joint
-        # self.DH[0] = [self.theta[0], self.l1, 0, np.pi/2]
-        # self.DH[1] = [self.theta[1] + np.pi/2, 0, self.l2, np.pi]
-        # self.DH[2] = [self.theta[2], 0, self.l3, np.pi]
-        # self.DH[3] = [self.theta[3] - np.pi/2, 0, 0, -np.pi/2]
-        # self.DH[4] = [self.theta[4], self.l4 + self.l5, 0, 0]
-
-        self.DH = [
-            [self.theta[0], self.l1, 0, -np.pi/2],
-            [self.theta[1] - np.pi/2, 0, self.l2, np.pi],
-            [self.theta[2], 0, self.l3, np.pi],
-            [self.theta[3] + np.pi/2, 0, 0, np.pi/2],
-            [self.theta[4], self.l4 + self.l5, 0, 0],
-        ]
+        self.DH[0] = [self.theta[0], self.l1, 0, np.pi/2]
+        self.DH[1] = [self.theta[1] + np.pi/2, 0, self.l2, np.pi]
+        self.DH[2] = [self.theta[2], 0, self.l3, np.pi]
+        self.DH[3] = [self.theta[3] - np.pi/2, 0, 0, -np.pi/2]
+        self.DH[4] = [self.theta[4], self.l4 + self.l5, 0, 0]
 
         # Compute the transformation matrices
         for i in range(self.num_dof):
@@ -271,7 +263,7 @@ class FiveDOFRobot:
         # print(f'damped inverse case: {self.damped_inverse_jacobian()}')
 
         # (Corrective measure) Ensure joint velocities stay within limits
-        thetadot = np.clip(thetadot, [limit[0] for limit in self.thetadot_limits], [limit[1] for limit in self.thetadot_limits])
+        # thetadot = np.clip(thetadot, [limit[0] for limit in self.thetadot_limits], [limit[1] for limit in self.thetadot_limits])
 
         # Update joint angles
         self.theta[0] += 0.02 * thetadot[0]
@@ -462,9 +454,10 @@ class FiveDOFRobot:
                   2. desired joint configuration is very close to OR at a singularity \n \
                   3. iterative algorithm is stuck at a local minima \n \
                   4. solver is taking too long to converge  \n")
-            print(f"Max position error: {max(e, key=abs)} | # iterations: {i}/{ilimit} ")
             # raise ValueError
             return False
+        print(f"Max position error: {max(e, key=abs)} | # iterations: {i}/{ilimit} ")
+        print(np.degrees(q))
 
         return q
 
@@ -495,7 +488,7 @@ class FiveDOFRobot:
         rpy = rotm_to_euler(self.T_ee[:3, :3])
         self.ee.rotx, self.ee.roty, self.ee.rotz = rpy[0], rpy[1], rpy[2]
 
-        print(f'[{self.ee.x}, {self.ee.y}, {self.ee.z}, {self.ee.rotx}, {self.ee.roty}, {self.ee.rotz}]')
+        print(f'[{self.ee.x}, {self.ee.y}, {self.ee.z}, 0, 0, 0]')
 
         # Calculate the EE axes in space (in the base frame)
         self.EE = [self.ee.x, self.ee.y, self.ee.z]

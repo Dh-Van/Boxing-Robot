@@ -55,17 +55,21 @@ class HiwonderRobot:
         
         # self.set_base_velocity(cmd)
 
+        home_pos = [0.234, 0, 0.174, 0, 0, 0]
+
         if cmd.arm_lb:
             self.set_arm_velocity(cmd)
 
         if cmd.btn_x:
-            pos = [0.23376863005385828, 0.008227954229936628, 0.17673272810981122, 3.141592653589793, 1.0596323536177026, -3.1064101781827542]
-            self.go_to_position(pos)
+            self.go_to_position(home_pos)
 
         if cmd.btn_y:
-            # pos = [0.08203527,  0.06826877,  1.58996693, -0.50472789,  0.00461826,  0]
-            # self.set_joint_values(pos, radians=True)
-            self.set_joint_values([90, 0, 0, 0, 90, 0])
+            pos = home_pos.copy()
+            pos[0] -= 0.1
+            pos[1] += 0
+            pos[2] += 0.1
+            self.go_to_position(pos)
+            # self.set_joint_values([90, 0, 0, 0, 90, 0])
 
         ######################################################################
 
@@ -115,7 +119,6 @@ class HiwonderRobot:
 
         # Update joint angles
         dt = 1 # Fixed time step
-        K = 1600 # mapping gain for individual joint control
         new_thetalist = [0.0]*6
 
         # linear velocity control
@@ -128,11 +131,11 @@ class HiwonderRobot:
         self.set_joint_values(new_thetalist, radians=False)
 
     def go_to_position(self, pos):
-        EE = s_ut.EndEffector(pos[0], pos[1], pos[2], pos[3], pos[4], pos[5])
-        theta = self.sim.calc_numerical_ik(EE)
+        EE = s_ut.EndEffector(pos[0], pos[1], pos[2], 0, 0, 0)
+        theta = np.degrees(self.sim.solve_inverse_kinematics(EE, tol=0.01))
         theta = np.append(theta, 0.0)
-        print(theta)
-        self.set_joint_values(theta, radians = True)
+        # print(theta)
+        self.set_joint_values(theta)
 
 
     def set_joint_value(self, joint_id: int, theta: float, duration=250, radians=False):

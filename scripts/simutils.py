@@ -4,7 +4,7 @@ import math, numpy as np
 from math import sqrt, sin, cos, atan, atan2
 from functools import singledispatch
 
-PI = np.pi
+PI = 3.1415926535897932384
 
 @dataclass
 class State:
@@ -249,13 +249,12 @@ def near_zero(arr: np.ndarray) -> np.ndarray:
 
 
 def wraptopi(angle_rad):
-    """Wraps an angle in radians to the range [-pi, pi).
+  """Wraps an angle in radians to the range [-pi, pi).
 
-    Args:
-        angle_rad: The angle in radians.
+  Args:
+    angle_rad: The angle in radians.
 
-    Returns:
-        The wrapped angle in radians.
-    """
-    # return angle_rad
-    return (angle_rad + math.pi) % (2 * math.pi) - math.pi
+  Returns:
+    The wrapped angle in radians.
+  """
+  return (angle_rad + math.pi) % (2 * math.pi) - math.pi
