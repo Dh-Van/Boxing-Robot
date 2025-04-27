@@ -456,8 +456,7 @@ class FiveDOFRobot:
                   4. solver is taking too long to converge  \n")
             # raise ValueError
             return False
-        print(f"Max position error: {max(e, key=abs)} | # iterations: {i}/{ilimit} ")
-        print(np.degrees(q))
+        # print(f"Max position error: {max(e, key=abs)} | # iterations: {i}/{ilimit} ")
 
         return q
 
@@ -488,7 +487,7 @@ class FiveDOFRobot:
         rpy = rotm_to_euler(self.T_ee[:3, :3])
         self.ee.rotx, self.ee.roty, self.ee.rotz = rpy[0], rpy[1], rpy[2]
 
-        print(f'[{self.ee.x}, {self.ee.y}, {self.ee.z}, 0, 0, 0]')
+        # print(f'[{self.ee.x}, {self.ee.y}, {self.ee.z}, 0, 0, 0]')
 
         # Calculate the EE axes in space (in the base frame)
         self.EE = [self.ee.x, self.ee.y, self.ee.z]
@@ -522,16 +521,12 @@ class FiveDOFRobot:
     #         hiwonder.set_joint_values(joint_angles)  # Pass joint angles for this time step
         
 
-    def generateTrajectory(self, cur_pos, end_pos):
+    def generateTrajectory(self, cur_pos, end_pos, total_time):
         """Generates a list of trajectories for the arm to follow"""
+        num_steps = int(total_time / 0.01)
         traj = MultiAxisTrajectoryGenerator(method="quintic",
-                                        interval=[0,5],
+                                        interval=[0,total_time],
                                         ndof=5,
                                         start_pos=cur_pos,
                                         final_pos=end_pos)
-        return(traj.generatePositions(nsteps=20))
-        # t = traj.generatePositions(nsteps=20)
-        # print(t[0])
-        # t[0] is the 1st joint of the arm
-# five_dof = FiveDOFRobot()
-# five_dof.generateTrajectory([0,0,0,0,0], [10,10,10,10,10])
+        return ((total_time/70), traj.generatePositions(nsteps=num_steps))

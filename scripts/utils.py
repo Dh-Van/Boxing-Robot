@@ -52,7 +52,7 @@ def print_dataclass(obj):
         print(f"{field}: {round(getattr(obj, field), 3)}")
     print("------------------------------------ \n")
 
-
+@dataclass
 class EndEffector:
     x: float = 0.0
     y: float = 0.0
@@ -170,6 +170,9 @@ def euler_to_rotm(rpy: tuple) -> np.ndarray:
                     [math.sin(rpy[0]), math.cos(rpy[0]), 0],
                     [0, 0, 1]])
     return R_z @ R_y @ R_x
+
+def list_to_EE(pos):
+    return EndEffector(pos[0], pos[1], pos[2], pos[3], pos[4], pos[5])
 
 
 @dataclass

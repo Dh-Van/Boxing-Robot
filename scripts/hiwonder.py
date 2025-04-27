@@ -68,10 +68,17 @@ class HiwonderRobot:
 
         if cmd.btn_y:
             pos = home_pos.copy()
-            pos[0] -= 0.1
-            pos[1] += 0
-            pos[2] += 0.1
+            pos[0] -= 0.2
+            pos[1] += 0.25
+            pos[2] -= 0.1
             self.go_to_position(pos)
+
+        if cmd.btn_a:
+            pos = home_pos.copy()
+            pos[0] -= 0.2
+            pos[1] += 0.25
+            pos[2] -= 0.1
+            self.move_to_position(home_pos, pos, 0.69)
 
         ######################################################################
 
@@ -145,6 +152,28 @@ class HiwonderRobot:
         theta = np.append(theta, 0.0)
         # print(theta)
         self.set_joint_values(theta)
+
+    def move_to_position(self, start_pos, end_pos, i_time):
+        start_pos = np.append(np.array(start_pos), [0, 0, 0])
+        end_pos = np.append(np.array(end_pos), [0, 0, 0])
+        start_angles = self.sim.solve_inverse_kinematics(ut.list_to_EE(start_pos))
+        end_angles = self.sim.solve_inverse_kinematics(ut.list_to_EE(end_pos))
+        time_increment, all_positions = self.sim.generateTrajectory(start_angles, end_angles, i_time)
+        np_all_pos = np.array(all_positions)
+
+        start_time = time.time()
+        last_time = start_time
+        i = 0
+        while time.time() - start_time < i_time:
+            current_time = time.time()
+            if(current_time - last_time) >= time_increment:
+                curr_joint_angles = np_all_pos[:, 0, i]
+                curr_joint_angles = np.append(np.array(curr_joint_angles), 0)
+                self.set_joint_values(curr_joint_angles, duration=0, radians=True)
+                last_time = current_time
+                i += 1
+
+        
 
 
     def set_joint_value(self, joint_id: int, theta: float, duration=250, radians=False):
