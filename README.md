@@ -62,3 +62,9 @@ $ sudo venv/bin/python main.py
 <img src = "media/jstick-manual-2.png" height="330">
 
 
+# How to kill camera rosnode:
+1. rosnode kill -a
+2. pkill -f roscore
+3. pkill -f roslaunch
+4. pkill -f rosmaster
+5. pkill -f rosout

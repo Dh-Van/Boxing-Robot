@@ -9,6 +9,7 @@ import sys, os
 import time
 import threading
 import traceback
+import cv2
 
 # Extend system path to include script directory
 sys.path.append(os.path.join(os.getcwd(), 'scripts'))
@@ -60,7 +61,15 @@ def main():
         gamepad_thread.start()
         
         control_interval = 0.25  # Seconds per control cycle
-        
+        # camera = cv2.VideoCapture(0)
+
+        # ret, frame = camera.read()
+        # if ret:
+        #     cv2.imwrite("/media/img.png")
+        #     print(f"Image captured and saved as")
+        # else:
+        #     print("Failed to capture image")
+
         while True:
             cycle_start = time.time()
 

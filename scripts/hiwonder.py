@@ -80,13 +80,10 @@ class HiwonderRobot:
             pos[2] -= 0.1
             self.move_to_position(home_pos[0:3], pos[0:3])
 
-        ######################################################################
-
-        position = [0]*3
+        # position = self.sim.solve_forward_kinematics(self.joint_values)
         
-        ######################################################################
-
         # print(f'[DEBUG] XYZ position: X: {round(position[0], 3)}, Y: {round(position[1], 3)}, Z: {round(position[2], 3)} \n')
+        print(self.sim.solve_forward_kinematics(self.joint_values))
 
 
     def set_base_velocity(self, cmd: ut.GamepadCmds):
@@ -129,10 +126,6 @@ class HiwonderRobot:
 
         thetalist_dot = self.sim.calc_velocity_kinematics(vel)
 
-        # print(f'[DEBUG] Current thetalist (deg) = {self.joint_values}') 
-        # print(f'[DEBUG] linear vel: {[round(vel[0], 3), round(vel[1], 3), round(vel[2], 3)]}')
-        # print(f'[DEBUG] thetadot (deg/s) = {[round(td,2) for td in thetalist_dot]}')
-
         # Update joint angles
         dt = 1 # Fixed time step
         new_thetalist = [0.0]*6
@@ -154,10 +147,7 @@ class HiwonderRobot:
         self.set_joint_values(theta)
 
     def move_to_position(self, start_pos, end_pos):
-        # start_pos = np.array(start_pos))
-        # end_pos = np.append(np.array(end_pos))
         total_time, time_increment, all_positions = self.sim.generateTrajectory(start_pos, end_pos)
-        print("time", total_time)
         np_all_pos = np.array(all_positions)
 
         start_time = time.time()
