@@ -511,23 +511,11 @@ class FiveDOFRobot:
         # print(f'distance {np.linalg.norm(e)}')
         # print(f'calc {ee_position_calc} | act {ee_position_actual}\n')
         return True if np.linalg.norm(e) < tol else False
-
-
-    # def moveToPos(self, cur_xyz, goal_xyz):
-    #     end_pos = self.solve_inverse_kinematics(goal_xyz)
-    #     steps = self.generateTrajectory(cur_xyz, end_pos)
-    #     for i in range(len(steps[0])):
-    #         joint_angles = [steps[j][i] for j in range(len(steps))]  # Extract joint angles for time step `i`
-    #         hiwonder.set_joint_values(joint_angles)  # Pass joint angles for this time step
         
 
-    def generateTrajectory(self, cur_pos, end_pos):
+    def generateTrajectory(self, cur_pos, end_pos, mode="task"):
         """Generates a list of trajectories for the arm to follow"""
-        traj = MultiAxisTrajectoryGenerator(method="quintic",
-                                        interval=[0,1],
-                                        ndof=3,
-                                        start_pos=cur_pos,
-                                        final_pos=end_pos)
-
-        total_time, positions = traj.generatePositions(nsteps = 100)
-        return (total_time,total_time / 100, positions)
+        traj = MultiAxisTrajectoryGenerator(method="quintic", ndof=3, start_pos=cur_pos, final_pos=end_pos)
+        nsteps = 50
+        total_time, positions = traj.generatePositions(nsteps=nsteps)
+        return (total_time,total_time / nsteps, positions)

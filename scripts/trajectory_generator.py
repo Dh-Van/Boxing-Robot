@@ -1,6 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
-
 
 class MultiAxisTrajectoryGenerator:
     """
@@ -87,49 +85,6 @@ class MultiAxisTrajectoryGenerator:
         """
         self.t = np.linspace(0, self.T, nsteps)
         return self.m.T, self.m.generate(nsteps=nsteps)
-
-    def plot(self):
-        """
-        Plot the position, velocity, and acceleration trajectories.
-        """
-        self.fig = plt.figure()
-        self.sub1 = self.fig.add_subplot(3, 1, 1)  # Position plot
-        self.sub2 = self.fig.add_subplot(3, 1, 2)  # Velocity plot
-        self.sub3 = self.fig.add_subplot(3, 1, 3)  # Acceleration plot
-
-        self.fig.set_size_inches(8, 10)
-        self.fig.suptitle(self.mode + " Trajectory Generator", fontsize=16)
-
-        colors = ["r", "g", "b", "m", "y"]
-
-        for i in range(self.ndof):
-            # position plot
-            self.sub1.plot(
-                self.t, self.m.X[i][0], colors[i] + "o-", label=self.labels[i]
-            )
-            self.sub1.set_ylabel("position", fontsize=15)
-            self.sub1.grid(True)
-            self.sub1.legend()
-
-            # velocity plot
-            self.sub2.plot(
-                self.t, self.m.X[i][1], colors[i] + "o-", label=self.labels[i]
-            )
-            self.sub2.set_ylabel("velocity", fontsize=15)
-            self.sub2.grid(True)
-            self.sub2.legend()
-
-            # acceleration plot
-            self.sub3.plot(
-                self.t, self.m.X[i][2], colors[i] + "o-", label=self.labels[i]
-            )
-            self.sub3.set_ylabel("acceleration", fontsize=15)
-            self.sub3.set_xlabel("Time (secs)", fontsize=18)
-            self.sub3.grid(True)
-            self.sub3.legend()
-
-        plt.show()
-
 
 class LinearInterp:
     """
@@ -236,21 +191,15 @@ class QuinticPolynomial:
     def __init__(self, trajgen):
         self._copy_params(trajgen)
 
-        dx = 0.1
-        dy = 0.5
+        dx = 0.15
+        dy = 0.75
         dz = 0.25
-
-        print((self.final_pos[0] - self.start_pos[0]) ** 2)
-        print((self.final_pos[1] - self.start_pos[1]) ** 2)
-        print((self.final_pos[2] - self.start_pos[2]) ** 2)
-
 
         time_x = np.sqrt((self.final_pos[0] - self.start_pos[0]) ** 2) / dx
         time_y = np.sqrt((self.final_pos[1] - self.start_pos[1]) ** 2) / dy
         time_z = np.sqrt((self.final_pos[2] - self.start_pos[2]) ** 2) / dz
 
         self.T = max(time_x, max(time_y, time_z))
-        print("time", self.T)
 
         self.solve()
 
