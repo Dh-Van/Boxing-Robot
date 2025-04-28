@@ -86,7 +86,7 @@ class MultiAxisTrajectoryGenerator:
 
         """
         self.t = np.linspace(0, self.T, nsteps)
-        return self.m.generate(nsteps=nsteps)
+        return self.m.T, self.m.generate(nsteps=nsteps)
 
     def plot(self):
         """
@@ -235,14 +235,30 @@ class QuinticPolynomial:
 
     def __init__(self, trajgen):
         self._copy_params(trajgen)
+
+        dx = 0.1
+        dy = 0.5
+        dz = 0.25
+
+        print((self.final_pos[0] - self.start_pos[0]) ** 2)
+        print((self.final_pos[1] - self.start_pos[1]) ** 2)
+        print((self.final_pos[2] - self.start_pos[2]) ** 2)
+
+
+        time_x = np.sqrt((self.final_pos[0] - self.start_pos[0]) ** 2) / dx
+        time_y = np.sqrt((self.final_pos[1] - self.start_pos[1]) ** 2) / dy
+        time_z = np.sqrt((self.final_pos[2] - self.start_pos[2]) ** 2) / dz
+
+        self.T = max(time_x, max(time_y, time_z))
+        print("time", self.T)
+
         self.solve()
 
     def _copy_params(self, trajgen):
         self.start_pos = trajgen.start_pos
         self.start_vel = trajgen.start_vel
         self.final_pos = trajgen.final_pos
-        # self.final_vel = trajgen.final_vel
-        self.final_vel = [5, 5, 5, 5, 5]
+        self.final_vel = trajgen.final_vel
         self.start_acc = trajgen.start_acc
         self.final_acc = trajgen.final_acc
         self.T = trajgen.T

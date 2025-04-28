@@ -521,12 +521,13 @@ class FiveDOFRobot:
     #         hiwonder.set_joint_values(joint_angles)  # Pass joint angles for this time step
         
 
-    def generateTrajectory(self, cur_pos, end_pos, total_time):
+    def generateTrajectory(self, cur_pos, end_pos):
         """Generates a list of trajectories for the arm to follow"""
-        num_steps = int(total_time / 0.01)
         traj = MultiAxisTrajectoryGenerator(method="quintic",
-                                        interval=[0,total_time],
-                                        ndof=5,
+                                        interval=[0,1],
+                                        ndof=3,
                                         start_pos=cur_pos,
                                         final_pos=end_pos)
-        return ((total_time/70), traj.generatePositions(nsteps=num_steps))
+
+        total_time, positions = traj.generatePositions(nsteps = 100)
+        return (total_time,total_time / 100, positions)

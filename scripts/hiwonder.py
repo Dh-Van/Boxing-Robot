@@ -78,7 +78,7 @@ class HiwonderRobot:
             pos[0] -= 0.2
             pos[1] += 0.25
             pos[2] -= 0.1
-            self.move_to_position(home_pos, pos, 0.69)
+            self.move_to_position(home_pos[0:3], pos[0:3])
 
         ######################################################################
 
@@ -153,22 +153,22 @@ class HiwonderRobot:
         # print(theta)
         self.set_joint_values(theta)
 
-    def move_to_position(self, start_pos, end_pos, i_time):
-        start_pos = np.append(np.array(start_pos), [0, 0, 0])
-        end_pos = np.append(np.array(end_pos), [0, 0, 0])
-        start_angles = self.sim.solve_inverse_kinematics(ut.list_to_EE(start_pos))
-        end_angles = self.sim.solve_inverse_kinematics(ut.list_to_EE(end_pos))
-        time_increment, all_positions = self.sim.generateTrajectory(start_angles, end_angles, i_time)
+    def move_to_position(self, start_pos, end_pos):
+        # start_pos = np.array(start_pos))
+        # end_pos = np.append(np.array(end_pos))
+        total_time, time_increment, all_positions = self.sim.generateTrajectory(start_pos, end_pos)
+        print("time", total_time)
         np_all_pos = np.array(all_positions)
 
         start_time = time.time()
         last_time = start_time
         i = 0
-        while time.time() - start_time < i_time:
+        while time.time() - start_time < total_time:
             current_time = time.time()
             if(current_time - last_time) >= time_increment:
-                curr_joint_angles = np_all_pos[:, 0, i]
-                curr_joint_angles = np.append(np.array(curr_joint_angles), 0)
+                curr_pos = np_all_pos[:, 0, i]
+                ik_pos = np.append(curr_pos, [0, 0, 0])
+                curr_joint_angles = np.append(self.sim.solve_inverse_kinematics(ut.list_to_EE(ik_pos)), 0)
                 self.set_joint_values(curr_joint_angles, duration=0, radians=True)
                 last_time = current_time
                 i += 1
@@ -210,7 +210,7 @@ class HiwonderRobot:
 
         thetalist = self.enforce_joint_limits(thetalist)
         self.joint_values = thetalist # updates joint_values with commanded thetalist
-        print(f"thetalist={thetalist}")
+        # print(f"thetalist={thetalist}")
         thetalist = self.remap_joints(thetalist) # remap the joint values from software to hardware
 
 
