@@ -12,6 +12,7 @@ from servo_bus_controller import ServoBusController
 import utils as ut
 import simutils as s_ut
 from five_dof_arm import FiveDOFRobot
+from image_processor import ImageProcessor
 
 # Robot base constants
 WHEEL_RADIUS = 0.047  # meters
@@ -78,6 +79,7 @@ class HiwonderRobot:
             pos[0] -= 0.2
             pos[1] += 0.25
             pos[2] -= 0.1
+            pos = 
             self.move_to_position(home_pos[0:3], pos[0:3])
 
         # position = self.sim.solve_forward_kinematics(self.joint_values)

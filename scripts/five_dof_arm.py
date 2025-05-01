@@ -519,3 +519,8 @@ class FiveDOFRobot:
         nsteps = 50
         total_time, positions = traj.generatePositions(nsteps=nsteps)
         return (total_time,total_time / nsteps, positions)
+    
+    # def camera_frame_to_robot_frame(self, pose):
+        """
+        Converts the position of an object from the camera frame to the robot frame
+        """
