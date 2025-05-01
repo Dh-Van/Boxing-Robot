@@ -4,6 +4,7 @@ from matplotlib.figure import Figure
 from simutils import EndEffector, rotm_to_euler, euler_to_rotm, check_joint_limits, dh_to_matrix, near_zero, wraptopi
 from trajectory_generator import *
 import hiwonder
+from image_processor import ImageProcessor
 PI = 3.1415926535897932384
 # np.set_printoptions(precision=3)
 
@@ -53,6 +54,8 @@ class FiveDOFRobot:
         
         # End-effector object
         self.ee = EndEffector()
+
+        self.image_processor = ImageProcessor()
         
         # Robot's points
         self.num_dof = 5
@@ -520,7 +523,18 @@ class FiveDOFRobot:
         total_time, positions = traj.generatePositions(nsteps=nsteps)
         return (total_time,total_time / nsteps, positions)
     
-    # def camera_frame_to_robot_frame(self, pose):
+    def get_aruco_position(self):
         """
         Converts the position of an object from the camera frame to the robot frame
         """
+        # make image processor, capture image, undistort it, get aruco position, covert to robot base frame, return position
+        cam_frame = self.image_processor.get_aruco_marker()
+        self.calc_forward_kinematics(self.theta, radians=True)
+        robot_frame = self.T @ cam_frame
+        robot_frame = robot_frame - [0.00, 0.00, 0.00, 0.00]
+        print(robot_frame)
+        return robot_frame
+
+
+        # end effector to camera = 5cm in z direction, 4 in the y?
+        

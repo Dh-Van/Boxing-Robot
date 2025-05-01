@@ -35,6 +35,7 @@ class HiwonderRobot:
         self.speed_control_delay = 0.2
 
         self.sim = FiveDOFRobot()
+        self.cam = ImageProcessor()
 
         self.move_to_home_position()
 
@@ -79,7 +80,8 @@ class HiwonderRobot:
             pos[0] -= 0.2
             pos[1] += 0.25
             pos[2] -= 0.1
-            pos = 
+            pos = self.sim.get_aruco_position()
+            
             self.move_to_position(home_pos[0:3], pos[0:3])
 
         # position = self.sim.solve_forward_kinematics(self.joint_values)
