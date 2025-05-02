@@ -80,8 +80,8 @@ class HiwonderRobot:
             pos[0] -= 0.2
             pos[1] += 0.25
             pos[2] -= 0.1
-            pos = self.sim.get_aruco_position()
-            
+            # pos = self.sim.get_aruco_position()
+            # if pos is not None:
             self.move_to_position(home_pos[0:3], pos[0:3])
 
         # position = self.sim.solve_forward_kinematics(self.joint_values)

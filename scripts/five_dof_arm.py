@@ -5,6 +5,8 @@ from simutils import EndEffector, rotm_to_euler, euler_to_rotm, check_joint_limi
 from trajectory_generator import *
 import hiwonder
 from image_processor import ImageProcessor
+from spatialmath import SE3
+
 PI = 3.1415926535897932384
 # np.set_printoptions(precision=3)
 
@@ -458,7 +460,7 @@ class FiveDOFRobot:
                   3. iterative algorithm is stuck at a local minima \n \
                   4. solver is taking too long to converge  \n")
             # raise ValueError
-            return False
+            return q
         # print(f"Max position error: {max(e, key=abs)} | # iterations: {i}/{ilimit} ")
 
         return q
@@ -525,16 +527,78 @@ class FiveDOFRobot:
     
     def get_aruco_position(self):
         """
-        Converts the position of an object from the camera frame to the robot frame
+        Detects the first ArUco marker (using machinevisiontoolbox),
+        transforms its position from the camera frame to the robot's base frame,
+        considering the camera's mounting offset.
+
+        Returns:
+            np.array: The 3D position [x, y, z] of the marker in the robot base frame,
+                      or None if no marker is detected or an error occurs.
         """
-        # make image processor, capture image, undistort it, get aruco position, covert to robot base frame, return position
-        cam_frame = self.image_processor.get_aruco_marker()
-        self.calc_forward_kinematics(self.theta, radians=True)
-        robot_frame = self.T @ cam_frame
-        robot_frame = robot_frame - [0.00, 0.00, 0.00, 0.00]
-        print(robot_frame)
-        return robot_frame
+        # 1. Get marker list from ImageProcessor (using machinevisiontoolbox)
+        markers = self.image_processor.get_aruco_marker() # Returns list of FiducialMarker
 
-
-        # end effector to camera = 5cm in z direction, 4 in the y?
+        if not markers:
+            print("Error: No ArUco markers detected or ImageProcessor failed.")
+            return None
         
+
+        # --- Extract pose of the first marker relative to camera ---
+        marker = markers[0] # Assume the first marker is the target
+        try:
+            # marker.pose should be an SE3 object representing T_{Camera <- Marker}
+            T_cam_marker = marker.pose
+            if not isinstance(T_cam_marker, SE3):
+                 raise TypeError(f"Expected marker.pose to be SE3, but got {type(T_cam_marker)}")
+
+            # Get the position vector of the marker's origin in the camera frame
+            p_marker_in_cam = T_cam_marker.t # .t extracts the translation component [x,y,z]
+        except (AttributeError, TypeError, IndexError) as e:
+             print(f"Error accessing SE3 pose/translation from detected marker object: {e}")
+             return None
+
+        # Convert position vector to homogeneous coordinate NumPy vector (4x1)
+        p_cam_h = np.append(p_marker_in_cam, 1.0).reshape(4, 1)
+        print(f"{p_cam_h=}")
+        # --- Done extracting marker position ---
+
+        # 2. Define the transformation FROM Camera frame {C} TO End-Effector frame {E}
+        # T_ee_cam represents T_{E <- C}
+        # User confirmed: offsets from EE origin to Cam origin, along EE axes, axes aligned.
+        t_offset_y_ee = 0.04 # meters
+        t_offset_z_ee = 0.05 # meters
+        # Using NumPy array for transformation matrix
+        T_ee_cam = np.array([
+            [1, 0, 0, 0],
+            [0, 1, 0, t_offset_y_ee],
+            [0, 0, 1, t_offset_z_ee],
+            [0, 0, 0, 1]
+        ])
+
+        # 3. Get the current transformation FROM Base frame {B} TO End-Effector frame {E}
+        # T_base_ee represents T_{B <- E}
+        try:
+            # Ensure FK is calculated and self.T_ee exists
+            if not hasattr(self, 'T_ee') or not isinstance(self.T_ee, np.ndarray):
+                 print("Warning: self.T_ee not found or invalid, calculating FK...")
+                 self.calc_forward_kinematics(self.theta, radians=True) # Calculate FK if needed
+            T_base_ee = self.T_ee # This should be a 4x4 NumPy array
+            if T_base_ee.shape != (4, 4):
+                 raise ValueError("self.T_ee has incorrect shape after FK.")
+        except Exception as e:
+            print(f"Error accessing or calculating robot FK (self.T_ee): {e}")
+            return None
+
+        # 4. Calculate the transformation FROM Camera frame {C} TO Base frame {B}
+        # T_base_cam = T_base_ee * T_ee_cam ( T_{B <- C} = T_{B <- E} * T_{E <- C} )
+        T_base_cam = T_base_ee @ T_ee_cam # NumPy matrix multiplication
+
+        # 5. Transform the marker point FROM Camera frame TO Base frame
+        # P_base_h = T_base_cam * P_cam_h
+        p_base_h = T_base_cam @ p_cam_h # NumPy matrix-vector multiplication
+
+        # 6. Extract the 3D coordinates [x, y, z]
+        p_base = p_base_h[:3].flatten() # Extract first 3 elements and make 1D array
+
+        print(f"Marker position in base frame: {p_base}")
+        return p_base        

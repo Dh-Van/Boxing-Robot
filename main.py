@@ -61,14 +61,27 @@ def main():
         gamepad_thread.start()
         
         control_interval = 0.25  # Seconds per control cycle
+
+        # available_cameras = []
+        # for device_id in range(10):
+        #     cap = cv2.VideoCapture(device_id)
+        #     if cap.isOpened():
+        #         print(f"Found camera at index {device_id}")
+        #         available_cameras.append(device_id)
+        #         cap.release()
+        #     else:
+        #         print(f"No camera at index {device_id}")
+        # print(f"{available_cameras=}")
         # camera = cv2.VideoCapture(0)
 
         # ret, frame = camera.read()
+        # camera.release()
         # if ret:
-        #     cv2.imwrite("/media/img.png")
+        #     cv2.imwrite(frame, "/media/img.png")
         #     print(f"Image captured and saved as")
         # else:
         #     print("Failed to capture image")
+
 
         while True:
             cycle_start = time.time()
