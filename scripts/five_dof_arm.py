@@ -1,10 +1,14 @@
-from math import sqrt, sin, cos, atan, atan2, degrees, pi
+from math import sqrt, sin, cos, atan, atan2, degrees, pi, radians
 import numpy as np
 from matplotlib.figure import Figure
 from simutils import EndEffector, rotm_to_euler, euler_to_rotm, check_joint_limits, dh_to_matrix, near_zero, wraptopi
 from trajectory_generator import *
 import hiwonder
 from image_processor import ImageProcessor
+from spatialmath import SE3
+import utils as ut
+
+
 PI = 3.1415926535897932384
 # np.set_printoptions(precision=3)
 
@@ -65,6 +69,11 @@ class FiveDOFRobot:
         self.DH = np.zeros((5, 4))
         self.T = np.zeros((self.num_dof, 4, 4))
 
+        self.cam_offset = 0.0
+        self.cam_DH = (
+            ut.dh_to_matrix([-np.pi/2, 0, 0, 0])
+            @ ut.dh_to_matrix([0, 0, 0, np.pi/2])
+        )
     
     def calc_forward_kinematics(self, theta: list, radians=False):
         """
@@ -518,23 +527,135 @@ class FiveDOFRobot:
 
     def generateTrajectory(self, cur_pos, end_pos, mode="task"):
         """Generates a list of trajectories for the arm to follow"""
-        traj = MultiAxisTrajectoryGenerator(method="quintic", ndof=3, start_pos=cur_pos, final_pos=end_pos)
-        nsteps = 50
+        traj = MultiAxisTrajectoryGenerator(method="linear", ndof=3, start_pos=cur_pos, final_pos=end_pos)
+        nsteps = 100
         total_time, positions = traj.generatePositions(nsteps=nsteps)
         return (total_time,total_time / nsteps, positions)
     
-    def get_aruco_position(self):
+    # def pose_cam2_world_frame(self, x,y,z):
+    #     theta = [radians(i) for i in self.joint_values]
+    #     DH = self.calc
+    def pose_cam2world_frame(self, x, y, z):
         """
-        Converts the position of an object from the camera frame to the robot frame
+        Given x, y, and z in the camera frame, return the respective pose
+        in the world frame.
+
+        Args:
+            x: float
+            y: float
+            z: float
         """
-        # make image processor, capture image, undistort it, get aruco position, covert to robot base frame, return position
-        cam_frame = self.image_processor.get_aruco_marker()
-        self.calc_forward_kinematics(self.theta, radians=True)
-        robot_frame = self.T @ cam_frame
-        robot_frame = robot_frame - [0.00, 0.00, 0.00, 0.00]
-        print(robot_frame)
-        return robot_frame
 
+        self.DH[0] = [self.theta[0], self.l1, 0, np.pi/2]
+        self.DH[1] = [self.theta[1] + np.pi/2, 0, self.l2, np.pi]
+        self.DH[2] = [self.theta[2], 0, self.l3, np.pi]
+        self.DH[3] = [self.theta[3] - np.pi/2, 0, 0, -np.pi/2]
+        self.DH[4] = [self.theta[4], self.l4 + self.l5, 0, 0]
 
-        # end effector to camera = 5cm in z direction, 4 in the y?
+        self.T = np.zeros((self.num_dof,4,4))
+        for i in range(self.num_dof):
+            self.T[i] = dh_to_matrix(self.DH[i])
+
+        # calculate cumulative transformation matrices
+        T_cumulative = [np.eye(4)]
+        for i in range(5):
+            T_cumulative.append(T_cumulative[-1] @ self.T[i])
+
+        # convert cam frame to world frame
+        pose_cam_frame = np.array([[x], [y], [z], [1]])
+        pose_world_frame = T_cumulative[5] @ self.cam_DH @ pose_cam_frame
+
+        return pose_world_frame[:3]
+    def get_aruco_position(self, markerid):
+        """
+        Detects ArUco marker and transforms its position from camera to robot base frame.
+        Returns the [x, y, z] position of the marker in base frame.
+        """
+
+        # 1. Detect ArUco marker
+        markers = self.image_processor.get_aruco_marker()
+        if not markers:
+            print("No ArUco markers detected.")
+            return None
         
+        print(f'{markers=}')
+
+        marker = markers[markerid]
+        T_cam_marker = marker.pose  # SE3 object
+        p_marker_in_cam = T_cam_marker.t
+        print(f"p_marker_in_cam: {p_marker_in_cam}")
+
+        # Convert to homogeneous form
+        p_cam_h = np.append(p_marker_in_cam, 1.0).reshape(4, 1)
+        print(f"p_cam_h (marker in camera frame, homogeneous): \n{p_cam_h}")
+        newframe = self.pose_cam2world_frame(p_cam_h[0, 0], p_cam_h[1, 0], p_cam_h[2, 0])
+        print(f"{newframe=}")
+        
+        return newframe.flatten()
+ 
+        T_ee_cam = ut.dh_to_matrix([np.pi, 0, 0, 0]) @ ut.dh_to_matrix([0,0,0.045, 0])
+
+        # 3. Base-to-EE transform
+        print(f"Using joint angles: {self.theta}")
+        self.calc_forward_kinematics(self.theta, radians=True)
+        T_base_ee = self.T_ee
+        # print(f"T_base_ee (Base <- EE): \n{T_base_ee}")
+
+        # 4. Compose Base <- Camera
+        T_base_cam = T_base_ee @ T_ee_cam
+        # print(f"T_base_cam (Base <- Camera): \n{T_base_cam}")
+
+        # 5. Transform marker position to base frame
+        p_base_h = T_base_cam @ p_cam_h
+        # print(f"p_base_h (marker in base frame): \n{p_base_h}")
+
+        # 6. Extract position
+        p_base = p_base_h[:3].flatten()
+        print(f"Marker position in base frame: {p_base}")
+        print(f"End effector position in base frame: {self.points[-1][:3]}")
+
+
+        # R = np.array([
+        #     [1, 0, 0],
+        #     [0, 0, 1],
+        #     [0, -1, 1]
+        # ])
+
+        # t_offset_x_ee = 0.0254
+        # t_offset_y_ee = 0.0
+        # t_offset_z_ee = 0.0254
+
+        # T_ee_cam = np.eye(4)
+        # T_ee_cam[:3, :3] = R
+        # T_ee_cam[:3, 3] = [t_offset_x_ee, t_offset_y_ee, t_offset_z_ee]
+        # print(f"T_ee_cam (EE <- Camera): \n{T_ee_cam}")
+
+        # # 3. Base-to-EE transform
+        # print(f"Using joint angles: {self.theta}")
+        # self.calc_forward_kinematics(self.theta, radians=True)
+        # T_base_ee = self.T_ee
+        # print(f"T_base_ee (Base <- EE): \n{T_base_ee}")
+
+        # # 4. Compose Base <- Camera
+        # T_base_cam = T_base_ee @ T_ee_cam
+        # print(f"T_base_cam (Base <- Camera): \n{T_base_cam}")
+
+        # # 5. Transform marker position to base frame
+        # p_base_h = T_base_cam @ p_cam_h
+        # print(f"p_base_h (marker in base frame): \n{p_base_h}")
+
+        # # 6. Extract position
+        # p_base = p_base_h[:3].flatten()
+        # print(f"Marker position in base frame: {p_base}")
+
+        # # Optional: Marker in EE frame
+        # T_cam_marker_np = T_cam_marker.A
+        # T_cam_ee = np.linalg.inv(T_ee_cam)
+        # T_marker_ee = T_cam_ee @ np.linalg.inv(T_cam_marker_np)
+        # print("Marker in EE frame (T_marker_ee translation):", T_marker_ee[:3, 3])
+
+        # return p_base
+
+
+        
+

@@ -53,11 +53,12 @@ class HiwonderRobot:
         if cmd.arm_home:
             self.move_to_home_position()
 
-        print(f'---------------------------------------------------------------------')
+        # print(f'---------------------------------------------------------------------')
         
         # self.set_base_velocity(cmd)
 
-        home_pos = [0.234, 0, 0.174, 0, 0, 0]
+        # home_pos = [0.234, 0, 0.174, 0, 0, 0] # out, up, 
+        home_pos = [0.234 - 0.15, 0, 0.174 + 0.1, 0, 0, 0]
 
         if cmd.arm_rb:
             self.set_arm_velocity(cmd)
@@ -66,30 +67,36 @@ class HiwonderRobot:
             self.set_base_velocity(cmd)
 
         if cmd.btn_x:
+            init_pos = [0.234, 0, 0.174, 0, 0, 0]
             self.go_to_position(home_pos)
 
         if cmd.btn_y:
-            pos = home_pos.copy()
-            pos[0] -= 0.2
-            pos[1] += 0.25
-            pos[2] -= 0.1
-            self.go_to_position(pos)
+            pass
+
+        if cmd.btn_b:
+            pass
 
         if cmd.btn_a:
-            pos = home_pos.copy()
-            pos[0] -= 0.2
-            pos[1] += 0.25
-            pos[2] -= 0.1
-            pos = self.sim.get_aruco_position()
-            
-            self.move_to_position(home_pos[0:3], pos[0:3])
+            pass
 
-        # position = self.sim.solve_forward_kinematics(self.joint_values)
+        if cmd.btn_rt:
+            pos = self.sim.get_aruco_position(0)
+            if pos is not None:
+                print(f'Starting Position = {home_pos}')
+                print(f'Marker Position = {pos}')
+                self.move_to_position(home_pos[0:3], pos[0:3])
+
+        if cmd.btn_lt:
+            pos = self.sim.get_aruco_position(1)
+            if pos is not None:
+                print(f'Starting Position = {home_pos}')
+                print(f'Marker Position = {pos}')
+                self.move_to_position(home_pos[0:3], pos[0:3])
         
-        # print(f'[DEBUG] XYZ position: X: {round(position[0], 3)}, Y: {round(position[1], 3)}, Z: {round(position[2], 3)} \n')
-        print(self.sim.solve_forward_kinematics(self.joint_values))
+        # print(self.sim.solve_forward_kinematics(self.joint_values))
 
-
+    def getJointValues(self):
+        return self.joint_values
     def set_base_velocity(self, cmd: ut.GamepadCmds):
         """ Computes wheel speeds based on joystick input and sends them to the board """
         """
@@ -162,8 +169,10 @@ class HiwonderRobot:
             if(current_time - last_time) >= time_increment:
                 curr_pos = np_all_pos[:, 0, i]
                 ik_pos = np.append(curr_pos, [0, 0, 0])
-                curr_joint_angles = np.append(self.sim.solve_inverse_kinematics(ut.list_to_EE(ik_pos)), 0)
-                self.set_joint_values(curr_joint_angles, duration=0, radians=True)
+                traj_output = self.sim.solve_inverse_kinematics(ut.list_to_EE(ik_pos), tol=0.005)
+                if not isinstance(traj_output, bool):
+                    curr_joint_angles = np.append(traj_output, 0)
+                    self.set_joint_values(curr_joint_angles, duration=0, radians=True)
                 last_time = current_time
                 i += 1
 

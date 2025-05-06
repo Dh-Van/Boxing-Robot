@@ -1,70 +1,98 @@
-# Python Library for the Hiwonder 5-DOF Mobile Manipulator (v2024)
+# Boxing Bot: Vision-Guided Task-Space Planning on a 5-DOF Mobile Manipulator
 
-This repository provides the python libraries for interfacing with the Hiwonder 5-DOF mobile manipulator. The robot platform has an onboard **Raspberry Pi 4B** which serves as the main compute unit of the system. The 5-DOF arm are driven by serial bus servos controlled over serial while the mobile base is driven by DC motors controlled by a custom driver board with communication over I2C.
+This repository documents our final project for the *Fundamentals of Robotics (Spring 2025)* course at Olin College. We developed a vision-guided trajectory planner for a boxing robot using a HiWonder 5-DOF arm. The system detects an ARUCO marker using a webcam, estimates its 6-DOF pose, transforms this into the robot's base frame, generates task-space waypoints around the marker, and uses inverse kinematics to execute a basic boxing motion.
 
-Your project development will be done onboard the Raspberry Pi ideally over **SSH protocol**.
+<p align="center">
+  <img src="media/hiwonder.png" height="300" alt="Hiwonder Arm Setup">
+</p>
 
-NOTE: This branch is to be used with the version of the robot that's using the **RasAdapter V3.6 expansion board**.
+## Project Video
 
-<img src = "media/hiwonder.png" width="" height="400">
+🎥 [Click to view the demo video](https://www.youtube.com/watch?v=REPLACE_ME)
 
-## Setting up the onboard Raspberry Pi
+## Repository Overview
 
-#### Step 0: Connect to Raspberry Pi over SSH
-- Run `ssh funrobot@funrobot#.local` in terminal, replacing `#` with the number of your SD card.
-  [Find your SD card number](https://docs.google.com/spreadsheets/d/1oiZmZgGmFAW9nbCus0FoESnCpqEN_4TZb9X0I5U4Vjc/).
-  **The password is `FunR0b0!`** 
-- SSH troubleshooting:
-  - Make sure you are connected to the Olin Robotics network (It should work on Olin, but Olin Robotics may be faster/more stable).
-  - Make sure OpenSSH Client and OpenSSH Server are installed (should be installed by default on Mac/Linux, may need to be installed under `Settings > System > Optional Features` in Windows).
-  - Make sure the OpenSSH folder is added to your path. Should be `C:\Windows\System32\OpenSSH` in Windows.
-  - Check the SD card to make sure the number physically written on it matches what you expect.
+This repository contains:
 
-#### Step 1: Create a virtual environment
-- We strongly recommend that you create a new python virtual environment for all your work on the platform.
-- Follow this [tutorial here](https://docs.python.org/3/tutorial/venv.html).
+- All Python code used to run our vision and motion pipeline on a Raspberry Pi 4B  
+- Instructions to connect and deploy code on the HiWonder robot platform  
+- Our technical report documenting system architecture, implementation, and insights  
 
+## How to Run the System
 
-#### Step 2: Get this repository from Github
-- I recommend you fork this repository to the account of one of your teammates and then you all can clone from the forked version.
-- Follow [this tutorial](https://ftc-docs.firstinspires.org/en/latest/programming_resources/tutorial_specific/android_studio/fork_and_clone_github_repository/Fork-and-Clone-From-GitHub.html) to understand how to fork and clone repositories
+### Prerequisites
 
+- Raspberry Pi 4B with RasAdapter V3.6  
+- SSH access to the Pi (use `ssh funrobot@funrobot#.local`)  
+- A connected camera module on `/dev/video0`  
+- ARUCO marker placed in view  
 
-#### Step 3: Install all required Python packages
+### 1. SSH into the Raspberry Pi
+
 ```bash
-# first: make sure you have activated the virtual environment. See step 1 tutorial
-
-# cd to the project folder
-$ cd hiwonder-armpi-pro
-
-# install all required packages from requirements.txt
-$ pip install -r requirements.txt
+ssh funrobot@funrobot#.local
+# Default password is: FunR0b0!
 ```
 
+### 2. Create a Python virtual environment
 
-### How to Run
-
-- Before you run any script, please initialize the **pigpiod module**
-``` bash
-$ sudo pigpiod
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
 ```
 
-- If setup worked well, you should be able to run the main script with the command below:
-``` bash
-$ sudo venv/bin/python main.py 
-# this runs the main script using admin privileges and the virtual environment's python interpreter.
-# N.B.: Please make sure you set the right path for your virtual environment's python interpreter above
+### 3. Initialize pigpio daemon
+
+```bash
+sudo pigpiod
 ```
 
-### Usage Guide
+### 4. Run the system
 
-<img src = "media/jstick-manual-1.png" height="300"> 
-<img src = "media/jstick-manual-2.png" height="330">
+```bash
+sudo venv/bin/python main.py
+```
 
+> Make sure the `main.py` script points to the correct path for your Python virtual environment.
 
-# How to kill camera rosnode:
-1. rosnode kill -a
-2. pkill -f roscore
-3. pkill -f roslaunch
-4. pkill -f rosmaster
-5. pkill -f rosout
+## System Summary
+
+The system is composed of:
+
+- **Vision Module**: Captures one frame, detects a 36h11 ARUCO marker, and computes the 5-DOF pose using camera intrinsics and distortion correction. Pose is transformed to robot base frame.  
+- **Trajectory Planning**: Generates task-space waypoints around the marker pose.  
+- **Execution Loop**: Uses an inverse kinematics solver to sequentially move the end-effector to each waypoint.  
+
+<p align="center">
+  <img src="media/jstick-manual-1.png" height="260">
+  <img src="media/jstick-manual-2.png" height="260">
+</p>
+
+## Known Limitations
+
+- The ARUCO marker was oversized, reducing precision.  
+- System is limited to static, one-shot motion (not real-time responsive).  
+- No drivetrain or mobile base integration implemented.  
+
+## Future Work
+
+- Replace marker with smaller fiducials for higher accuracy  
+- Integrate dynamic camera updates for live trajectory correction  
+- Add drivetrain control to enable mobile sparring behavior  
+
+## Technical Report
+
+📄 [Download Full Report (PDF)](media/FunRobo_Final.pdf)
+
+## ROS Camera Node Troubleshooting
+
+If you encounter errors accessing the camera, kill ROS processes:
+
+```bash
+rosnode kill -a
+pkill -f roscore
+pkill -f roslaunch
+pkill -f rosmaster
+pkill -f rosout
+```

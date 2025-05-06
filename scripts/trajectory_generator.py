@@ -9,7 +9,7 @@ class MultiAxisTrajectoryGenerator:
 
     def __init__(
         self,
-        method="quintic",
+        method="linear",
         mode="joint",
         interval=[0, 1],
         ndof=1,
@@ -93,6 +93,16 @@ class LinearInterp:
 
     def __init__(self, trajgen):
         self._copy_params(trajgen)
+
+        dx = 0.1
+        dy = 0.2
+        dz = 0.6
+
+        time_x = np.sqrt((self.final_pos[0] - self.start_pos[0]) ** 2) / dx
+        time_y = np.sqrt((self.final_pos[1] - self.start_pos[1]) ** 2) / dy
+        time_z = np.sqrt((self.final_pos[2] - self.start_pos[2]) ** 2) / dz
+
+        self.T = max(time_x, max(time_y, time_z))
         self.solve()
 
     def _copy_params(self, trajgen):
@@ -117,6 +127,7 @@ class LinearInterp:
                 qd.append(self.final_pos[i] - self.start_pos[i])
                 qdd.append(0)
             self.X[i] = [q, qd, qdd]
+        print(self.T)
         return self.X
 
 
@@ -127,6 +138,15 @@ class CubicPolynomial:
 
     def __init__(self, trajgen):
         self._copy_params(trajgen)
+        dx = 0.2
+        dy = 0.5
+        dz = 0.3
+
+        time_x = np.sqrt((self.final_pos[0] - self.start_pos[0]) ** 2) / dx
+        time_y = np.sqrt((self.final_pos[1] - self.start_pos[1]) ** 2) / dy
+        time_z = np.sqrt((self.final_pos[2] - self.start_pos[2]) ** 2) / dz
+
+        self.T = max(time_x, max(time_y, time_z))
         self.solve()
 
     def _copy_params(self, trajgen):
@@ -191,9 +211,9 @@ class QuinticPolynomial:
     def __init__(self, trajgen):
         self._copy_params(trajgen)
 
-        dx = 0.15
-        dy = 0.75
-        dz = 0.25
+        dx = 0.2
+        dy = 0.5
+        dz = 0.3
 
         time_x = np.sqrt((self.final_pos[0] - self.start_pos[0]) ** 2) / dx
         time_y = np.sqrt((self.final_pos[1] - self.start_pos[1]) ** 2) / dy
