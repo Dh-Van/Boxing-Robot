@@ -7,6 +7,9 @@ Your project development will be done onboard the Raspberry Pi ideally over **SS
 
 <img src = "media/hiwonder.png" width="" height="400">
 
+
+### Please report [robot issues here!](https://forms.gle/eETnQvGQqcb31asM8)
+
 ## Setting up the onboard Raspberry Pi
 
 #### Step 0: Connect to the Raspberry Pi from your laptop over SSH
