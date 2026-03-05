@@ -7,7 +7,7 @@ This module initializes a connected gamepad and translates its inputs into robot
 
 import inputs
 import time
-from funrobo_kinematics.core.utils import GamepadCmds
+from funrobo_hiwonder.core.utils import GamepadCmds
 
 
 class GamepadControl:
